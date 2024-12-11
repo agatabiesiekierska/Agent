@@ -1,13 +1,13 @@
 ## This is a router with all functions realted to conversationm with OpenAi models
 
-import fastapi
+from fastapi import HTTPException, Depends, APIRouter
 import logging
 from pydantic import BaseModel
 from scripts.completion import Completion
 from app.core.config import settings
 
 # Initialize the router
-router = fastapi.APIRouter()
+router = APIRouter()
 
 # Import OpenAI API key
 openai_api_key = settings.openai_api_key
