@@ -1,6 +1,6 @@
 ## This is a router with all functions realted to conversationm with OpenAi models
 
-from fastapi import HTTPException, Depends, APIRouter
+from fastapi import HTTPException, APIRouter, status, Depends
 import logging
 from pydantic import BaseModel
 from scripts.completion import Completion
