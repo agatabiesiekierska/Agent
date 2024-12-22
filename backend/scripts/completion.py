@@ -1,9 +1,9 @@
 from openai import OpenAI
-import json
 
 class Completion:
-    def __init__(self, openai_api_key):
+    def __init__(self, openai_api_key, model):
         self.secret_key = openai_api_key
+        self.model = model
 
 
     def summarize_text(self, user_input):
@@ -22,7 +22,7 @@ class Completion:
     '''
         client = OpenAI(api_key = self.secret_key)
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=self.model,
         messages=[
             {"role": "system", "content": prompt},
             {"role": "user", "content": user_input}
@@ -46,7 +46,7 @@ class Completion:
     '''
         client = OpenAI(api_key = self.secret_key)
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=self.model,
         messages=[
             {"role": "system", "content": prompt},
             {"role": "user", "content": user_input}

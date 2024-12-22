@@ -1,10 +1,14 @@
-## This is a router with all functions realted to conversationm with OpenAi models
-
 from fastapi import HTTPException, APIRouter, status, Depends
 import logging
-from pydantic import BaseModel
-from scripts.completion import Completion
+from sqlmodel import Session
+from database.db_setup import get_session
 from app.core.config import settings
+from database.models.conversations import Conversation
+from app.input_schemas.creating_conversation import ConversationCreate
+from app.input_schemas.creating_messages import NewMessage
+from app.utils.conversation_utils import start_new_conversation, get_conversation_id
+from app.utils.messages_utils import add_new_message
+from app.utils.open_ai_utils import answer_question
 
 # Initialize the router
 router = APIRouter()
@@ -12,39 +16,40 @@ router = APIRouter()
 # Import OpenAI API key
 openai_api_key = settings.openai_api_key
 
-
-# class for input of the user to "/generate script" endpoint
-class script_instructions(BaseModel):
-    instructions: str 
-    language: str | None = 'Python'
-   
-
-# class for input of the user to "/summary" endpoint
-class User_command_input(BaseModel):
-    user_input: str
-
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# GET method for receiving conversation by id
+@router.get("/conversation/{conversation_id}", response_model=Conversation)
+async def find_conversation_by_id(conversation_id: int, session: Session = Depends(get_session)):
+    try:
+        conversation = get_conversation_id(session = session, conversation_id = conversation_id)
+        return conversation
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Failed to call conversation: {str(e)}")
 
-## POST method for summary of the given text
-@router.post("/summary")
-async def start_conversation(data: User_command_input):
-    # Log the received data
-    logging.info(f"Received user input: {data.user_input}")
-    
 
-## POST method for generating programming script
-@router.post("/generate_script")
-async def generate_script(data: script_instructions):
-    # Log the received data
-    logging.info(f"Received user input: {data.instructions}")
+@router.post("/conversation_create")
+async def start_conversation(conversation_in: ConversationCreate, session: Session = Depends(get_session)):
+    try:
+        new_conversation = start_new_conversation(conversation=conversation_in, session = session)
+        return new_conversation
     
-    # Generate the Completion object and call the generate_script method
-    completion = Completion(openai_api_key)
-    answer = completion.generate_script(data.instructions, data.language)
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Failed to start conversation: {str(e)}") 
+
+@router.post("/conversation/{conversation_id}")
+async def continue_conversation(new_message: NewMessage, session: Session = Depends(get_session)):
+    try:
+        question = add_new_message(new_message, session)
+        response_LLM = answer_question(question.content, question.model)
+        response = NewMessage(conversation_id=question.conversation_id, sender = question.model, content=response_LLM)
+        add_response = add_new_message(response, session)
+        return add_response
     
-    # Log the output of the LLM
-    logger.info(f"LLM response {answer}")
-    return answer
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Failed to call conversation: {str(e)}")
+
+
+        

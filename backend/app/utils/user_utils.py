@@ -5,8 +5,8 @@ from database.models.users import Users
 def get_user(session: Session, user_id: int):
     return session.query(Users).filter(Users.user_id == user_id).first()
 
-def get_user_by_email(session: Session, email: str):
-    return session.query(Users).filter(Users.email == email).first()
+def get_user_by_username(session: Session, username: str):
+    return session.query(Users).filter(Users.username == username).first()
 
 def get_users(session: Session, skip: int = 0, limit: int = 100):
     return session.query(Users).offset(skip).limit(limit).all()

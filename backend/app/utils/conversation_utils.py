@@ -1,6 +1,7 @@
 from sqlmodel import Session, select
+from sqlalchemy.orm import joinedload
 from database.models.users import Users
-from database.models.conversations import Conversation
+from database.models.conversations import Conversation, Messages
 from app.input_schemas.creating_conversation import ConversationCreate
 from fastapi import HTTPException, status
 
@@ -15,8 +16,13 @@ def start_new_conversation(conversation: ConversationCreate, session: Session):
         if not user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Failed to call user. User not found!")
 
+        # Validate the model name
+        valid_models = ["gpt-3.5-turbo", "gpt-4", "gpt-4o", "gpt-4o-mini"]  # Add more models as needed
+        if conversation.model not in valid_models:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid model name")
+        
         # Create a new conversation
-        new_conversation = Conversation(user_id=conversation.user_id)
+        new_conversation = Conversation(user_id=conversation.user_id, model = conversation.model)
 
         # Add the new conversation to the session
         session.add(new_conversation)
@@ -28,14 +34,12 @@ def start_new_conversation(conversation: ConversationCreate, session: Session):
         session.refresh(new_conversation)
 
         # Load related data (messages)
-        query = (
-            select(Conversation.messages)
-            .join(Conversation)
-            .where(Conversation.conversation_id == new_conversation.id)
-        )
-        loaded_messages = session.exec(query).all()
+        loaded_messages = session.query(Messages).options(joinedload(Messages.conversation)).filter(
+            Messages.conversation_id == new_conversation.conversation_id
+        ).all()
+        
 
-        return {"conversation": new_conversation, "messages": loaded_messages}
+        return {"conversation_id": new_conversation.conversation_id, "messages": loaded_messages}
 
     except Exception as e:
         session.rollback()

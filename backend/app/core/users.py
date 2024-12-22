@@ -4,7 +4,7 @@ from database.models.users import Users
 from typing import List
 from sqlmodel import Session
 from database.db_setup import get_session
-from utils.user_utils import get_user, get_user_by_email, get_users, create_user
+from app.utils.user_utils import get_user, get_user_by_username, get_users, create_user
 
 router = APIRouter()
 
@@ -31,7 +31,7 @@ async def call_users(skip: int = 0, limit: int = 100, session: Session = Depends
 @router.post("/users", status_code = status.HTTP_201_CREATED)
 async def create_new_user(user: Users, session: Session = Depends(get_session)):
     try:
-        if_user_exists = get_user_by_email(session=session, email = user.email)
+        if_user_exists = get_user_by_username(session=session, username = user.username)
         
         if if_user_exists:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"User already exists!")
@@ -42,7 +42,7 @@ async def create_new_user(user: Users, session: Session = Depends(get_session)):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Failed to create user: {str(e)}")
 
 # DELETE method for deleting user with specific ID    
-@router.post("/users/delete/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/users/delete/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(user_id: int, session: Session = Depends(get_session)):
     try:
         # Find the user by ID

@@ -1,7 +1,5 @@
-from datetime import datetime
-from typing import Optional
-from sqlmodel import Field, SQLModel
-
+from sqlmodel import SQLModel
 class ConversationCreate(SQLModel, table=False):
     user_id: int
+    model: str
     
