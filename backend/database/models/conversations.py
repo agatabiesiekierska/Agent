@@ -1,7 +1,8 @@
 from enum import Enum
 from typing import Optional
-from sqlalchemy import Column, DateTime, text
+from sqlalchemy import Column, DateTime, JSON, text
 from sqlmodel import SQLModel, Field, Relationship
+from typing import Dict
 import datetime
 
 class Conversation(SQLModel, table=True):
@@ -30,7 +31,7 @@ class Message(SQLModel, table=True):
     # Define the model for the message table in database
     message_id: int = Field(default=None, primary_key=True)
     sender: Sender
-    content: str
+    content: Dict = Field(sa_column=Column(JSON))
     timestamp: Optional[datetime.datetime] = Field(
         default_factory=datetime.datetime.now,
         sa_column=Column(DateTime(timezone=True), server_default=text("CURRENT_TIMESTAMP"))

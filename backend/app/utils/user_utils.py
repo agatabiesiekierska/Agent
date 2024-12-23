@@ -1,5 +1,6 @@
 from sqlmodel import Session
 from database.models.users import Users
+from app.input_schemas.creating_users import NewUser
 
 
 def get_user(session: Session, user_id: int):
@@ -11,7 +12,7 @@ def get_user_by_username(session: Session, username: str):
 def get_users(session: Session, skip: int = 0, limit: int = 100):
     return session.query(Users).offset(skip).limit(limit).all()
 
-def create_user(session: Session, user: Users):
+def create_user(session: Session, user: NewUser):
 
     # Create a new user object
     new_user = Users(username=user.username, email=user.email)

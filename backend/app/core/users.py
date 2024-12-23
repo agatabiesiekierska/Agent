@@ -1,6 +1,7 @@
 ## This is a router with all classes and methods realted to users
 from fastapi import HTTPException, APIRouter, status, Depends
 from database.models.users import Users
+from app.input_schemas.creating_users import NewUser
 from typing import List
 from sqlmodel import Session
 from database.db_setup import get_session
@@ -29,14 +30,14 @@ async def call_users(skip: int = 0, limit: int = 100, session: Session = Depends
 
 # POST method for creating new user - if the user already exists, it will return an Exeption
 @router.post("/users", status_code = status.HTTP_201_CREATED)
-async def create_new_user(user: Users, session: Session = Depends(get_session)):
+async def create_new_user(new_user: NewUser, session: Session = Depends(get_session)):
     try:
-        if_user_exists = get_user_by_username(session=session, username = user.username)
-        
+        if_user_exists = get_user_by_username(session=session, username = new_user.username)
+        ### Need to add check for email as well
         if if_user_exists:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"User already exists!")
         
-        return create_user(session=session, user=user)
+        return create_user(session=session, user=new_user)
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Failed to create user: {str(e)}")

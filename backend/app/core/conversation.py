@@ -44,7 +44,7 @@ async def start_conversation(conversation_in: ConversationCreate, session: Sessi
 @router.post("/conversation/{conversation_id}")
 async def continue_conversation(new_message: NewMessage, session: Session = Depends(get_session)):
     try:
-        question = Message(conversation_id=new_message.conversation_id, sender = Sender('user'), content=new_message.content)
+        question = Message(conversation_id=new_message.conversation_id, sender = Sender('user'), content= {"question": new_message.content})
         add_question = add_new_message(question, session)
         conversation = session.get(Conversation, question.conversation_id)
         response_LLM = answer_question(new_message.content, conversation.model)
