@@ -1,11 +1,6 @@
 from sqlmodel import SQLModel
-
-# from sqlalchemy.orm import registry
-# mapper_registry = registry()
-# @mapper_registry.mapped
-
-class NewMessage(SQLModel, table=False):
+class NewMessage(SQLModel):
+    # Define the model for new message
     conversation_id: int
-    sender: str
     content: str
     

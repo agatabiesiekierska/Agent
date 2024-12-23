@@ -3,12 +3,14 @@ import logging
 from sqlmodel import Session
 from database.db_setup import get_session
 from app.core.config import settings
-from database.models.conversations import Conversation
+from database.models.conversations import Conversation, Message
+from database.models.conversations import Sender
 from app.input_schemas.creating_conversation import ConversationCreate
 from app.input_schemas.creating_messages import NewMessage
 from app.utils.conversation_utils import start_new_conversation, get_conversation_id
 from app.utils.messages_utils import add_new_message
 from app.utils.open_ai_utils import answer_question
+
 
 # Initialize the router
 router = APIRouter()
@@ -42,9 +44,11 @@ async def start_conversation(conversation_in: ConversationCreate, session: Sessi
 @router.post("/conversation/{conversation_id}")
 async def continue_conversation(new_message: NewMessage, session: Session = Depends(get_session)):
     try:
-        question = add_new_message(new_message, session)
-        response_LLM = answer_question(question.content, question.model)
-        response = NewMessage(conversation_id=question.conversation_id, sender = question.model, content=response_LLM)
+        question = Message(conversation_id=new_message.conversation_id, sender = Sender('user'), content=new_message.content)
+        add_question = add_new_message(question, session)
+        conversation = session.get(Conversation, question.conversation_id)
+        response_LLM = answer_question(new_message.content, conversation.model)
+        response = Message(conversation_id=new_message.conversation_id, sender = Sender('model'), content=response_LLM)
         add_response = add_new_message(response, session)
         return add_response
     
@@ -52,4 +56,3 @@ async def continue_conversation(new_message: NewMessage, session: Session = Depe
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Failed to call conversation: {str(e)}")
 
 
-        

@@ -1,7 +1,7 @@
-from sqlmodel import Session, select
+from sqlmodel import Session
 from sqlalchemy.orm import joinedload
 from database.models.users import Users
-from database.models.conversations import Conversation, Messages
+from database.models.conversations import Conversation, Message
 from app.input_schemas.creating_conversation import ConversationCreate
 from fastapi import HTTPException, status
 
@@ -34,8 +34,8 @@ def start_new_conversation(conversation: ConversationCreate, session: Session):
         session.refresh(new_conversation)
 
         # Load related data (messages)
-        loaded_messages = session.query(Messages).options(joinedload(Messages.conversation)).filter(
-            Messages.conversation_id == new_conversation.conversation_id
+        loaded_messages = session.query(Message).options(joinedload(Message.conversation)).filter(
+            Message.conversation_id == new_conversation.conversation_id
         ).all()
         
 
